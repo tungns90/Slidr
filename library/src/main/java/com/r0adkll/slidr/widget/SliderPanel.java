@@ -583,6 +583,9 @@ public class SliderPanel extends FrameLayout {
      * The drag helper callbacks for dragging the slidr attachment in both horizontal directions
      */
     private final ViewDragHelper.Callback horizontalCallback = new ViewDragHelper.Callback() {
+
+        private boolean leftSwipe;
+
         @Override
         public boolean tryCaptureView(View child, int pointerId) {
             boolean edgeCase = !config.isEdgeOnly() || dragHelper.isEdgeTouched(edgePosition, pointerId);
@@ -645,6 +648,7 @@ public class SliderPanel extends FrameLayout {
 
             // Update the dimmer alpha
             Log.i(TAG, "onViewPositionChanged():horizontalCallback:percent: " + percent + " - left: " + left);
+            leftSwipe = left > 0;
             applyScrim(percent);
         }
 
@@ -660,8 +664,11 @@ public class SliderPanel extends FrameLayout {
                     }else{
                         // State Closed
                         if(listener != null) listener.onClosed();
-                        //TODO check left or right
-                        swipeCallback.onSwipeLeft();
+                        if (leftSwipe) {
+                            swipeCallback.onSwipeLeft();
+                        } else {
+                            swipeCallback.onSwipeRight();
+                        }
                     }
                     break;
                 case ViewDragHelper.STATE_DRAGGING:
