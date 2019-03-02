@@ -4,11 +4,14 @@ import android.animation.ArgbEvaluator;
 import android.app.Activity;
 import android.os.Build;
 import android.support.annotation.ColorInt;
+import android.util.Log;
 
 import com.r0adkll.slidr.widget.SliderPanel;
 
 
 class ColorPanelSlideListener implements SliderPanel.OnPanelSlideListener {
+
+    private final String TAG = ColorPanelSlideListener.class.getSimpleName();
 
     private final Activity activity;
     private final int primaryColor;
@@ -31,6 +34,7 @@ class ColorPanelSlideListener implements SliderPanel.OnPanelSlideListener {
 
     @Override
     public void onClosed() {
+        Log.i(TAG, "onClosed()");
         activity.finish();
         activity.overridePendingTransition(0, 0);
     }

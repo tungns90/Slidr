@@ -3,13 +3,15 @@ package com.r0adkll.slidr;
 
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.View;
 
 import com.r0adkll.slidr.model.SlidrConfig;
 import com.r0adkll.slidr.widget.SliderPanel;
 
-
 class FragmentPanelSlideListener implements SliderPanel.OnPanelSlideListener {
+
+    private final String TAG = FragmentPanelSlideListener.class.getSimpleName();
 
     private final View view;
     private final SlidrConfig config;
@@ -31,6 +33,7 @@ class FragmentPanelSlideListener implements SliderPanel.OnPanelSlideListener {
 
     @Override
     public void onClosed() {
+        Log.i(TAG, "onClosed()");
         if (config.getListener() != null) {
             if(config.getListener().onSlideClosed()) {
                 return;

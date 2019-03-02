@@ -3,10 +3,14 @@ package com.r0adkll.slidr;
 
 import android.app.Activity;
 import android.support.annotation.NonNull;
+import android.util.Log;
+
 import com.r0adkll.slidr.model.SlidrConfig;
 
 
 class ConfigPanelSlideListener extends ColorPanelSlideListener {
+
+    private final String TAG = ConfigPanelSlideListener.class.getSimpleName();
 
     private final SlidrConfig config;
 
@@ -27,6 +31,7 @@ class ConfigPanelSlideListener extends ColorPanelSlideListener {
 
     @Override
     public void onClosed() {
+        Log.i(TAG, "onClosed()");
         if(config.getListener() != null){
             if(config.getListener().onSlideClosed()) {
                 return;

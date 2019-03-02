@@ -27,8 +27,8 @@ public final class Slidr {
      * the user to lock/unlock the sliding mechanism for whatever purpose.
      */
     @NonNull
-    public static SlidrInterface attach(@NonNull Activity activity) {
-        return attach(activity, -1, -1);
+    public static SlidrInterface attach(@NonNull Activity activity, SwipeCallback swipeCallback) {
+        return attach(activity, -1, -1, swipeCallback);
     }
 
 
@@ -45,10 +45,10 @@ public final class Slidr {
      */
     @NonNull
     public static SlidrInterface attach(@NonNull Activity activity, @ColorInt int statusBarColor1,
-                                        @ColorInt int statusBarColor2) {
+                                        @ColorInt int statusBarColor2, SwipeCallback swipeCallback) {
 
         // Setup the slider panel and attach it to the decor
-        final SliderPanel panel = attachSliderPanel(activity, null);
+        final SliderPanel panel = attachSliderPanel(activity, null, swipeCallback);
 
         // Set the panel slide listener for when it becomes closed or opened
         panel.setOnPanelSlideListener(new ColorPanelSlideListener(activity, statusBarColor1, statusBarColor2));
@@ -67,10 +67,10 @@ public final class Slidr {
      * the user to lock/unlock the sliding mechanism for whatever purpose.
      */
     @NonNull
-    public static SlidrInterface attach(@NonNull Activity activity, @NonNull SlidrConfig config) {
+    public static SlidrInterface attach(@NonNull Activity activity, @NonNull SlidrConfig config, SwipeCallback swipeCallback) {
 
         // Setup the slider panel and attach it to the decor
-        final SliderPanel panel = attachSliderPanel(activity, config);
+        final SliderPanel panel = attachSliderPanel(activity, config, swipeCallback);
 
         // Set the panel slide listener for when it becomes closed or opened
         panel.setOnPanelSlideListener(new ConfigPanelSlideListener(activity, config));
@@ -84,14 +84,14 @@ public final class Slidr {
      * Attach a new {@link SliderPanel} to the root of the activity's content
      */
     @NonNull
-    private static SliderPanel attachSliderPanel(@NonNull Activity activity, @NonNull SlidrConfig config) {
+    private static SliderPanel attachSliderPanel(@NonNull Activity activity, @NonNull SlidrConfig config, SwipeCallback swipeCallback) {
         // Hijack the decorview
         ViewGroup decorView = (ViewGroup) activity.getWindow().getDecorView();
         View oldScreen = decorView.getChildAt(0);
         decorView.removeViewAt(0);
 
         // Setup the slider panel and attach it to the decor
-        SliderPanel panel = new SliderPanel(activity, oldScreen, config);
+        SliderPanel panel = new SliderPanel(activity, oldScreen, config, swipeCallback);
         panel.setId(R.id.slidable_panel);
         oldScreen.setId(R.id.slidable_content);
         panel.addView(oldScreen);
@@ -109,13 +109,13 @@ public final class Slidr {
      * the user to lock/unlock the sliding mechanism for whatever purpose.
      */
     @NonNull
-    public static SlidrInterface replace(@NonNull final View oldScreen, @NonNull final SlidrConfig config) {
+    public static SlidrInterface replace(@NonNull final View oldScreen, @NonNull final SlidrConfig config, SwipeCallback swipeCallback) {
         ViewGroup parent = (ViewGroup) oldScreen.getParent();
         ViewGroup.LayoutParams params = oldScreen.getLayoutParams();
         parent.removeView(oldScreen);
 
         // Setup the slider panel and attach it
-        final SliderPanel panel = new SliderPanel(oldScreen.getContext(), oldScreen, config);
+        final SliderPanel panel = new SliderPanel(oldScreen.getContext(), oldScreen, config, swipeCallback);
         panel.setId(R.id.slidable_panel);
         oldScreen.setId(R.id.slidable_content);
 

@@ -7,16 +7,20 @@ import android.graphics.Paint;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewGroupCompat;
 
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 
+import com.r0adkll.slidr.SwipeCallback;
 import com.r0adkll.slidr.model.SlidrConfig;
 import com.r0adkll.slidr.util.ViewDragHelper;
 import com.r0adkll.slidr.model.SlidrInterface;
 
 
 public class SliderPanel extends FrameLayout {
+
+    private final String TAG = SliderPanel.class.getSimpleName();
 
     private static final int MIN_FLING_VELOCITY = 400; // dips per second
 
@@ -34,6 +38,7 @@ public class SliderPanel extends FrameLayout {
     private int edgePosition;
 
     private SlidrConfig config;
+    private SwipeCallback swipeCallback;
 
 
 	public SliderPanel(Context context) {
@@ -41,10 +46,11 @@ public class SliderPanel extends FrameLayout {
 	}
 
 
-    public SliderPanel(Context context, View decorView, SlidrConfig config){
+    public SliderPanel(Context context, View decorView, SlidrConfig config, SwipeCallback swipeCallback){
         super(context);
         this.decorView = decorView;
 		this.config = (config == null ? new SlidrConfig.Builder().build() : config);
+		this.swipeCallback = swipeCallback;
         init();
     }
 
@@ -52,10 +58,13 @@ public class SliderPanel extends FrameLayout {
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         boolean interceptForDrag;
+        Log.i(TAG, "onInterceptTouchEvent():isLocked: " + isLocked);
 
         if(isLocked){
             return false;
         }
+
+        Log.i(TAG, "onInterceptTouchEvent():config.isEdgeOnly(): " + config.isEdgeOnly());
 
         if(config.isEdgeOnly()) {
             isEdgeTouched = canDragFromEdge(ev);
@@ -65,6 +74,7 @@ public class SliderPanel extends FrameLayout {
         try {
             interceptForDrag = dragHelper.shouldInterceptTouchEvent(ev);
         } catch (Exception e) {
+            e.printStackTrace();
             interceptForDrag = false;
         }
 
@@ -74,6 +84,7 @@ public class SliderPanel extends FrameLayout {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+	    Log.i(TAG, "onTouchEvent():isLocked: " + isLocked);
         if(isLocked){
             return false;
         }
@@ -90,6 +101,7 @@ public class SliderPanel extends FrameLayout {
 
     @Override
     public void computeScroll() {
+        Log.i(TAG, "computeScroll():isLocked: " + isLocked);
         super.computeScroll();
         if(dragHelper.continueSettling(true)){
             ViewCompat.postInvalidateOnAnimation(this);
@@ -99,6 +111,7 @@ public class SliderPanel extends FrameLayout {
 
     @Override
     protected void onDraw(Canvas canvas) {
+        Log.i(TAG, "onDraw():isLocked: " + isLocked);
         scrimRenderer.render(canvas, config.getPosition(), scrimPaint);
     }
 
@@ -192,6 +205,7 @@ public class SliderPanel extends FrameLayout {
             if(listener != null) listener.onSlideChange(percent);
 
             // Update the dimmer alpha
+            Log.i(TAG, "onViewPositionChanged():leftCallback:percent: " + percent);
             applyScrim(percent);
         }
 
@@ -207,6 +221,7 @@ public class SliderPanel extends FrameLayout {
                     }else{
                         // State Closed
                         if(listener != null) listener.onClosed();
+                        swipeCallback.onSwipeLeft();
                     }
                     break;
                 case ViewDragHelper.STATE_DRAGGING:
@@ -276,6 +291,7 @@ public class SliderPanel extends FrameLayout {
             if(listener != null) listener.onSlideChange(percent);
 
             // Update the dimmer alpha
+            Log.i(TAG, "onViewPositionChanged():rightCallback:percent: " + percent);
             applyScrim(percent);
         }
 
@@ -291,6 +307,7 @@ public class SliderPanel extends FrameLayout {
                     }else{
                         // State Closed
                         if(listener != null) listener.onClosed();
+                        swipeCallback.onSwipeRight();
                     }
                     break;
                 case ViewDragHelper.STATE_DRAGGING:
@@ -356,6 +373,7 @@ public class SliderPanel extends FrameLayout {
             if(listener != null) listener.onSlideChange(percent);
 
             // Update the dimmer alpha
+            Log.i(TAG, "onViewPositionChanged():topCallback:percent: " + percent);
             applyScrim(percent);
         }
 
@@ -436,6 +454,7 @@ public class SliderPanel extends FrameLayout {
             if(listener != null) listener.onSlideChange(percent);
 
             // Update the dimmer alpha
+            Log.i(TAG, "onViewPositionChanged():bottomCallback:percent: " + percent);
             applyScrim(percent);
         }
 
@@ -531,6 +550,7 @@ public class SliderPanel extends FrameLayout {
             if(listener != null) listener.onSlideChange(percent);
 
             // Update the dimmer alpha
+            Log.i(TAG, "onViewPositionChanged():verticalCallback:percent: " + percent);
             applyScrim(percent);
         }
 
@@ -624,6 +644,7 @@ public class SliderPanel extends FrameLayout {
             if(listener != null) listener.onSlideChange(percent);
 
             // Update the dimmer alpha
+            Log.i(TAG, "onViewPositionChanged():horizontalCallback:percent: " + percent + " - left: " + left);
             applyScrim(percent);
         }
 
@@ -639,6 +660,8 @@ public class SliderPanel extends FrameLayout {
                     }else{
                         // State Closed
                         if(listener != null) listener.onClosed();
+                        //TODO check left or right
+                        swipeCallback.onSwipeLeft();
                     }
                     break;
                 case ViewDragHelper.STATE_DRAGGING:
@@ -660,6 +683,7 @@ public class SliderPanel extends FrameLayout {
         final float minVel = MIN_FLING_VELOCITY * density;
 
         ViewDragHelper.Callback callback;
+        Log.i(TAG, "init():config.getPosition(): " + config.getPosition());
         switch (config.getPosition()){
             case LEFT:
                 callback = leftCallback;
@@ -733,6 +757,8 @@ public class SliderPanel extends FrameLayout {
         float x = ev.getX();
         float y = ev.getY();
 
+        Log.i(TAG, "canDragFromEdge():config.getPosition(): " + config.getPosition());
+
         switch (config.getPosition()) {
             case LEFT:
                 return x < config.getEdgeSize(getWidth());
@@ -754,6 +780,7 @@ public class SliderPanel extends FrameLayout {
     private void applyScrim(float percent){
         float alpha = (percent * (config.getScrimStartAlpha() - config.getScrimEndAlpha())) + config.getScrimEndAlpha();
         scrimPaint.setAlpha(toAlpha(alpha));
+        Log.i(TAG, "applyScrim():config.getPosition(): " + config.getPosition());
         invalidate(scrimRenderer.getDirtyRect(config.getPosition()));
     }
 

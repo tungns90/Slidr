@@ -299,6 +299,7 @@ public class ViewDragHelper {
     };
     private final Runnable mSetIdleRunnable = new Runnable() {
         public void run() {
+            Log.d(TAG, "run():setDragState(STATE_IDLE)");
             setDragState(STATE_IDLE);
         }
     };
@@ -473,6 +474,7 @@ public class ViewDragHelper {
      */
     public void abort() {
         cancel();
+        Log.d(TAG, "abort():mDragState: " + mDragState);
         if (mDragState == STATE_SETTLING) {
             final int oldX = mScroller.getCurrX();
             final int oldY = mScroller.getCurrY();
@@ -481,6 +483,7 @@ public class ViewDragHelper {
             final int newY = mScroller.getCurrY();
             mCallback.onViewPositionChanged(mCapturedView, newX, newY, newX - oldX, newY - oldY);
         }
+        Log.d(TAG, "abort():setDragState(STATE_IDLE)");
         setDragState(STATE_IDLE);
     }
 
@@ -548,6 +551,7 @@ public class ViewDragHelper {
         if (dx == 0 && dy == 0) {
             // Nothing to do. Send callbacks, be done.
             mScroller.abortAnimation();
+            Log.d(TAG, "forceSettleCapturedViewAt():setDragState(STATE_IDLE)");
             setDragState(STATE_IDLE);
             return false;
         }
@@ -669,6 +673,7 @@ public class ViewDragHelper {
      * @return true if settle is still in progress
      */
     public boolean continueSettling(boolean deferCallbacks) {
+        Log.d(TAG, "continueSettling():mDragState: " + mDragState);
         if (mDragState == STATE_SETTLING) {
             boolean keepGoing = mScroller.computeScrollOffset();
             final int x = mScroller.getCurrX();
@@ -692,8 +697,10 @@ public class ViewDragHelper {
             }
             if (!keepGoing) {
                 if (deferCallbacks) {
+                    Log.d(TAG, "continueSettling():deferCallbacks");
                     mParentView.post(mSetIdleRunnable);
                 } else {
+                    Log.d(TAG, "continueSettling():setDragState(STATE_IDLE)");
                     setDragState(STATE_IDLE);
                 }
             }
@@ -713,6 +720,7 @@ public class ViewDragHelper {
         mReleaseInProgress = false;
         if (mDragState == STATE_DRAGGING) {
             // onViewReleased didn't call a method that would have changed this. Go idle.
+            Log.d(TAG, "dispatchViewReleased():setDragState(STATE_IDLE)");
             setDragState(STATE_IDLE);
         }
     }
@@ -783,10 +791,12 @@ public class ViewDragHelper {
 
     private void saveLastMotion(MotionEvent ev) {
         final int pointerCount = MotionEventCompat.getPointerCount(ev);
+        Log.i(TAG, "saveLastMotion():pointerCount: " + pointerCount);
         for (int i = 0; i < pointerCount; i++) {
             final int pointerId = MotionEventCompat.getPointerId(ev, i);
             // If pointer is invalid then skip saving on ACTION_MOVE.
             if (!isValidPointerForActionMove(pointerId)) {
+                Log.i(TAG, "saveLastMotion():!isValidPointerForActionMove");
                 continue;
             }
             final float x = MotionEventCompat.getX(ev, i);
@@ -814,6 +824,7 @@ public class ViewDragHelper {
     }
 
     void setDragState(int state) {
+        Log.d(TAG, "setDragState():removeCallbacks");
         mParentView.removeCallbacks(mSetIdleRunnable);
         if (mDragState != state) {
             mDragState = state;
@@ -835,10 +846,12 @@ public class ViewDragHelper {
      */
     boolean tryCaptureViewForDrag(View toCapture, int pointerId) {
         if (toCapture == mCapturedView && mActivePointerId == pointerId) {
+            Log.i(TAG, "toCapture == mCapturedView && mActivePointerId == pointerId");
             // Already done!
             return true;
         }
         if (toCapture != null && mCallback.tryCaptureView(toCapture, pointerId)) {
+            Log.i(TAG, "toCapture != null && mCallback.tryCaptureView(toCapture, pointerId)");
             mActivePointerId = pointerId;
             captureChildView(toCapture, pointerId);
             return true;
@@ -900,6 +913,7 @@ public class ViewDragHelper {
             mVelocityTracker = VelocityTracker.obtain();
         }
         mVelocityTracker.addMovement(ev);
+        Log.i(TAG, "shouldInterceptTouchEvent():action: " + action);
         switch (action) {
             case MotionEvent.ACTION_DOWN: {
                 final float x = ev.getX();
@@ -938,9 +952,11 @@ public class ViewDragHelper {
                 break;
             }
             case MotionEvent.ACTION_MOVE: {
+                Log.i(TAG, "shouldInterceptTouchEvent():ACTION_MOVE:mInitialMotionX: " + mInitialMotionX + " - mInitialMotionY: " + mInitialMotionY);
                 if (mInitialMotionX == null || mInitialMotionY == null) break;
                 // First to cross a touch slop over a draggable view wins. Also report edge drags.
                 final int pointerCount = MotionEventCompat.getPointerCount(ev);
+                Log.i(TAG, "shouldInterceptTouchEvent():ACTION_MOVE:pointerCount: " + pointerCount);
                 for (int i = 0; i < pointerCount; i++) {
                     final int pointerId = MotionEventCompat.getPointerId(ev, i);
                     // If pointer is invalid then skip the ACTION_MOVE.
@@ -950,7 +966,9 @@ public class ViewDragHelper {
                     final float dx = x - mInitialMotionX[pointerId];
                     final float dy = y - mInitialMotionY[pointerId];
                     final View toCapture = findTopChildUnder((int) x, (int) y);
+                    Log.i(TAG, "shouldInterceptTouchEvent():ACTION_MOVE:toCapture: " + toCapture);
                     final boolean pastSlop = toCapture != null && checkTouchSlop(toCapture, dx, dy);
+                    Log.i(TAG, "shouldInterceptTouchEvent():ACTION_MOVE:init pastSlop: " + pastSlop);
                     if (pastSlop) {
                         // check the callback's
                         // getView[Horizontal|Vertical]DragRange methods to know
@@ -975,11 +993,14 @@ public class ViewDragHelper {
                         }
                     }
                     reportNewEdgeDrags(dx, dy, pointerId);
+                    Log.i(TAG, "shouldInterceptTouchEvent():ACTION_MOVE:mDragState: " + mDragState);
                     if (mDragState == STATE_DRAGGING) {
                         // Callback might have started an edge drag
                         break;
                     }
+                    Log.i(TAG, "shouldInterceptTouchEvent():ACTION_MOVE:pastSlop: " + pastSlop);
                     if (pastSlop && tryCaptureViewForDrag(toCapture, pointerId)) {
+                        Log.i(TAG, "shouldInterceptTouchEvent():ACTION_MOVE:pastSlop && tryCaptureViewForDrag(toCapture, pointerId):break");
                         break;
                     }
                 }
@@ -1009,6 +1030,7 @@ public class ViewDragHelper {
     public void processTouchEvent(MotionEvent ev) {
         final int action = MotionEventCompat.getActionMasked(ev);
         final int actionIndex = MotionEventCompat.getActionIndex(ev);
+        Log.d(TAG, "processTouchEvent():action: " + action);
         if (action == MotionEvent.ACTION_DOWN) {
             // Reset things for a new event stream, just in case we didn't get
             // the whole previous stream.
@@ -1058,6 +1080,7 @@ public class ViewDragHelper {
                 break;
             }
             case MotionEvent.ACTION_MOVE: {
+                Log.i(TAG, "processTouchEvent():ACTION_MOVE:mDragState: " + mDragState);
                 if (mDragState == STATE_DRAGGING) {
                     // If pointer is invalid then skip the ACTION_MOVE.
                     if (!isValidPointerForActionMove(mActivePointerId)) break;
@@ -1187,22 +1210,39 @@ public class ViewDragHelper {
      */
 
     private boolean checkTouchSlop(View child, float dx, float dy) {
+
         if (child == null) {
+            Log.i(TAG, "checkTouchSlop():child == null");
             return false;
         }
         final boolean checkHorizontal = mCallback.getViewHorizontalDragRange(child) > 0;
         final boolean checkVertical = mCallback.getViewVerticalDragRange(child) > 0;
 
-        float temp_dy = dy;
-        if (temp_dy < 0)
-            temp_dy = -temp_dy;
 
+        float temp_dy = dy;
+        if (temp_dy < 0) {
+            temp_dy = -temp_dy;
+        }
+        float temp_dx = dx > 0 ? dx : -dx;
+
+        Log.i(TAG, "checkTouchSlop():checkHorizontal: " + checkHorizontal);
+        Log.i(TAG, "checkTouchSlop():temp_dy: " + temp_dy);
+        Log.i(TAG, "checkTouchSlop():dx: " + dx);
+
+
+        boolean result = false;
         if (checkHorizontal && checkVertical) {
-            return dx * dx + dy * dy > mTouchSlop * mTouchSlop;
+            result = dx * dx + dy * dy > mTouchSlop * mTouchSlop;
+            Log.i(TAG, "checkTouchSlop():checkHorizontal && checkVertical:result: " + result);
+            return result;
         } else if (checkVertical) {
-            return Math.abs(dy) > mTouchSlop;
-        } else if (checkHorizontal && 3 * temp_dy < dx) {
-            return Math.abs(dx) > mTouchSlop;
+            result = Math.abs(dy) > mTouchSlop;
+            Log.i(TAG, "checkTouchSlop():checkVertical:result: " + result);
+            return result;
+        } else if (checkHorizontal && 3 * temp_dy < temp_dx) {
+            result = Math.abs(dx) > mTouchSlop;
+            Log.i(TAG, "checkTouchSlop():checkHorizontal:result: " + result);
+            return result;
         }
 
         return false;
@@ -1310,6 +1350,7 @@ public class ViewDragHelper {
     }
 
     private void dragTo(int left, int top, int dx, int dy) {
+        Log.d(TAG, "dragTo():dx: " + dx + " - dy: " + dy);
         int clampedX = left;
         int clampedY = top;
         final int oldLeft = mCapturedView.getLeft();

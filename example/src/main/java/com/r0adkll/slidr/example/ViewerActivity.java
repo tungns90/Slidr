@@ -2,9 +2,9 @@ package com.r0adkll.slidr.example;
 
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
@@ -14,20 +14,20 @@ import com.ftinc.kit.util.SizeUtils;
 import com.ftinc.kit.util.Utils;
 import com.ftinc.kit.widget.AspectRatioImageView;
 import com.r0adkll.slidr.Slidr;
+import com.r0adkll.slidr.SwipeCallback;
 import com.r0adkll.slidr.example.model.AndroidOS;
 import com.r0adkll.slidr.model.SlidrConfig;
 import com.r0adkll.slidr.model.SlidrPosition;
 
-import java.util.List;
-
-import butterknife.ButterKnife;
 import butterknife.BindView;
+import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 
 public class ViewerActivity extends AppCompatActivity {
 
     public static final String EXTRA_OS = "extra_os_version";
+    private final String TAG = ViewerActivity.class.getSimpleName();
 
     @BindView(R.id.toolbar) Toolbar mToolbar;
     @BindView(R.id.cover) AspectRatioImageView mCover;
@@ -59,7 +59,7 @@ public class ViewerActivity extends AppCompatActivity {
         mConfig = new SlidrConfig.Builder()
                 .primaryColor(primary)
                 .secondaryColor(secondary)
-                .position(SlidrPosition.VERTICAL)
+                .position(SlidrPosition.HORIZONTAL)
                 .velocityThreshold(2400)
 //                .distanceThreshold(.25f)
 //                .edge(true)
@@ -67,7 +67,17 @@ public class ViewerActivity extends AppCompatActivity {
                 .build();
 
         // Attach the Slidr Mechanism to this activity
-        Slidr.attach(this, mConfig);
+        Slidr.attach(this, mConfig, new SwipeCallback() {
+            @Override
+            public void onSwipeLeft() {
+                Log.i(TAG, "onSwipeLeft()");
+            }
+
+            @Override
+            public void onSwipeRight() {
+                Log.i(TAG, "onSwipeRight()");
+            }
+        });
 
         setSupportActionBar(mToolbar);
         getSupportActionBar().setTitle("");
